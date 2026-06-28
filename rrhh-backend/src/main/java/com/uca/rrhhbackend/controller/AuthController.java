@@ -1,9 +1,11 @@
 package com.uca.rrhhbackend.controller;
 
 import com.uca.rrhhbackend.dto.request.LoginRequest;
+import com.uca.rrhhbackend.dto.request.RegisterRequest;
 import com.uca.rrhhbackend.dto.response.AuthResponse;
 import com.uca.rrhhbackend.service.AuthService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -18,6 +20,15 @@ public class AuthController {
 
     public AuthController(AuthService authService) {
         this.authService = authService;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<AuthResponse> register(
+            @Valid @RequestBody RegisterRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(authService.register(request));
     }
 
     @PostMapping("/login")
