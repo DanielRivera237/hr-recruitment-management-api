@@ -43,14 +43,37 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
+
                         .requestMatchers("/api/companies/**")
                         .hasAnyRole("ADMIN", "RECRUITER")
+
                         .requestMatchers("/api/job-offers/**")
                         .hasAnyRole("ADMIN", "RECRUITER")
+
+                        .requestMatchers("/api/applications/**")
+                        .hasAnyRole("ADMIN", "RECRUITER", "CANDIDATE")
+
+                        .requestMatchers("/api/interviews/**")
+                        .hasAnyRole("ADMIN", "RECRUITER")
+
                         .requestMatchers("/api/recruiter-comments/**")
                         .hasAnyRole("ADMIN", "RECRUITER")
+
+                        .requestMatchers("/api/technical-tests/**")
+                        .hasAnyRole("ADMIN", "RECRUITER", "CANDIDATE")
+
+                        .requestMatchers("/api/notifications/**")
+                        .hasAnyRole("ADMIN", "RECRUITER", "CANDIDATE")
+
                         .requestMatchers("/api/scoring/**")
                         .hasAnyRole("ADMIN", "RECRUITER")
+
+                        .requestMatchers(
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/v3/api-docs/**"
+                        ).permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
