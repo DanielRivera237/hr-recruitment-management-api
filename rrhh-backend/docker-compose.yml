@@ -1,0 +1,66 @@
+services:
+  database:
+    image: postgres:16-alpine
+    container_name: rrhh-database
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - rrhh-postgres-data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    networks:
+      - rrhh-network
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: rrhh-backend
+    restart: unless-stopped
+
+    depends_on:
+      database:
+        condition: service_healthy
+
+    environment:
+      DATABASE_URL: jdbc:postgresql://database:5432/${POSTGRES_DB}
+      DATABASE_USERNAME: ${POSTGRES_USER}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      JWT_EXPIRATION_TIME: ${JWT_EXPIRATION_TIME:-86400000}
+
+      DDL_AUTO: update
+      SHOW_SQL: "false"
+      PORT: 8080
+
+    ports:
+      - "8080:8080"
+
+    networks:
+      - rrhh-network
+
+volumes:
+  rrhh-postgres-data:
+
+networks:
+  rrhh-network:
+    driver: bridge

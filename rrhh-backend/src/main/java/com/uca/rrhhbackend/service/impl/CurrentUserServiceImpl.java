@@ -6,73 +6,121 @@ import com.uca.rrhhbackend.exception.ResourceNotFoundException;
 import com.uca.rrhhbackend.repository.UserRepository;
 import com.uca.rrhhbackend.service.CurrentUserService;
 
-import jakarta.servlet.http.HttpServletRequest;
-
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Arrays;
 
 @Service
+@Transactional(readOnly = true)
 public class CurrentUserServiceImpl implements CurrentUserService {
 
     private final UserRepository userRepository;
 
     public CurrentUserServiceImpl(UserRepository userRepository) {
-
         this.userRepository = userRepository;
     }
 
     @Override
-    public User getCurrentUser(HttpServletRequest request) {
+    public User getCurrentUser() {
 
-        String userIdHeader = request.getHeader("X-User-Id");
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
 
-        if (userIdHeader == null || userIdHeader.isBlank()) {
+        if (authentication == null
+                || !authentication.isAuthenticated()
+                || authentication instanceof AnonymousAuthenticationToken) {
+
             throw new BusinessException(
-                    "El header X-User-Id es obligatorio y no puede estar vacío"
+                    "No existe un usuario autenticado"
             );
         }
 
-        Long userId = parseUserId(userIdHeader);
+        String email = authentication.getName();
 
-        User user = userRepository.findById(userId)
+        if (email == null || email.isBlank()) {
+            throw new BusinessException(
+                    "No se pudo obtener el correo del usuario autenticado"
+            );
+        }
+
+        User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("No se encontró el usuario con id " + userId)
+                        new ResourceNotFoundException(
+                                "No se encontró el usuario autenticado"
+                        )
                 );
 
-        if (!Boolean.TRUE.equals(user.getActive())) {
-            throw new BusinessException("El usuario no está activo");
-        }
-
-        if (Boolean.TRUE.equals(user.getBlocked())) {
-            throw new BusinessException("El usuario está bloqueado");
-        }
+        validateUserStatus(user);
 
         return user;
     }
 
     @Override
     public void requireCandidate(User user) {
+        requireAnyRole(user, "CANDIDATE");
+    }
 
-        if (user.getRole() == null || user.getRole().getName() == null) {
-            throw new BusinessException("El usuario no tiene rol asignado");
+    @Override
+    public void requireRecruiter(User user) {
+        requireAnyRole(user, "RECRUITER");
+    }
+
+    @Override
+    public void requireAdmin(User user) {
+        requireAnyRole(user, "ADMIN");
+    }
+
+    @Override
+    public void requireAnyRole(User user, String... allowedRoles) {
+
+        if (user == null) {
+            throw new BusinessException(
+                    "No se proporcionó un usuario válido"
+            );
         }
 
-        String normalizedRole = user.getRole()
+        if (user.getRole() == null
+                || user.getRole().getName() == null
+                || user.getRole().getName().isBlank()) {
+
+            throw new BusinessException(
+                    "El usuario no tiene un rol asignado"
+            );
+        }
+
+        String currentRole = user.getRole()
                 .getName()
                 .trim()
                 .toUpperCase();
 
-        if (!"CANDIDATE".equals(normalizedRole)) {
-            throw new BusinessException("Solo los candidatos pueden realizar esta acción");
+        boolean roleAllowed = Arrays.stream(allowedRoles)
+                .filter(role -> role != null && !role.isBlank())
+                .map(role -> role.trim().toUpperCase())
+                .anyMatch(currentRole::equals);
+
+        if (!roleAllowed) {
+            throw new BusinessException(
+                    "El usuario no tiene permisos para realizar esta acción"
+            );
         }
     }
 
-    private Long parseUserId(String value) {
+    private void validateUserStatus(User user) {
 
-        try {
-            return Long.parseLong(value.trim());
-        } catch (NumberFormatException exception) {
-            throw new BusinessException("El header X-User-Id debe ser un número válido");
+        if (!Boolean.TRUE.equals(user.getActive())) {
+            throw new BusinessException(
+                    "El usuario no está activo"
+            );
+        }
+
+        if (Boolean.TRUE.equals(user.getBlocked())) {
+            throw new BusinessException(
+                    "El usuario está bloqueado"
+            );
         }
     }
-
 }

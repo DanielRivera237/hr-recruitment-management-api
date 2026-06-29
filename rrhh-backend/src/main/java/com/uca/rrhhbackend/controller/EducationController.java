@@ -6,7 +6,6 @@ import com.uca.rrhhbackend.entity.User;
 import com.uca.rrhhbackend.service.CurrentUserService;
 import com.uca.rrhhbackend.service.EducationService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -26,56 +25,59 @@ public class EducationController {
             EducationService educationService,
             CurrentUserService currentUserService
     ) {
-
         this.educationService = educationService;
         this.currentUserService = currentUserService;
     }
 
     @PostMapping
     public ResponseEntity<EducationResponse> create(
-            @Valid @RequestBody EducationRequest request,
-            HttpServletRequest servletRequest
+            @Valid @RequestBody EducationRequest request
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(educationService.create(currentUser, request));
+        EducationResponse response =
+                educationService.create(currentUser, request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<EducationResponse>> findMyEducation(
-            HttpServletRequest servletRequest
-    ) {
+    public ResponseEntity<List<EducationResponse>> findMyEducation() {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.ok(educationService.findMyEducation(currentUser));
+        List<EducationResponse> response =
+                educationService.findMyEducation(currentUser);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<EducationResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody EducationRequest request,
-            HttpServletRequest servletRequest
+            @Valid @RequestBody EducationRequest request
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.ok(educationService.update(currentUser, id, request));
+        EducationResponse response =
+                educationService.update(currentUser, id, request);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @PathVariable Long id,
-            HttpServletRequest servletRequest
+            @PathVariable Long id
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
         educationService.delete(currentUser, id);
 
         return ResponseEntity.noContent().build();
     }
-
 }

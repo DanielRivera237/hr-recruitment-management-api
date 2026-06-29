@@ -10,6 +10,7 @@ import com.uca.rrhhbackend.mapper.NotificationMapper;
 import com.uca.rrhhbackend.repository.NotificationRepository;
 import com.uca.rrhhbackend.repository.UserRepository;
 import com.uca.rrhhbackend.service.NotificationService;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +32,14 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     @Override
-    public NotificationResponse create(NotificationRequest request) {
+    public NotificationResponse create(
+            NotificationRequest request
+    ) {
         User user = userRepository.findById(request.userId())
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Usuario no encontrado")
+                        new ResourceNotFoundException(
+                                "Usuario no encontrado"
+                        )
                 );
 
         Notification notification =
@@ -43,15 +48,19 @@ public class NotificationServiceImpl implements NotificationService {
         notification.setUser(user);
         notification.setRead(false);
 
-        return NotificationMapper.toResponse(
-                notificationRepository.save(notification)
-        );
+        Notification savedNotification =
+                notificationRepository.save(notification);
+
+        return NotificationMapper.toResponse(savedNotification);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationResponse> findByUser(Long userId) {
-        return notificationRepository.findByUserId(userId)
+    public List<NotificationResponse> findMyNotifications(
+            User currentUser
+    ) {
+        return notificationRepository
+                .findByUserId(currentUser.getId())
                 .stream()
                 .map(NotificationMapper::toResponse)
                 .toList();
@@ -59,16 +68,24 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationResponse> findUnreadByUser(Long userId) {
-        return notificationRepository.findByUserIdAndReadFalse(userId)
+    public List<NotificationResponse> findMyUnreadNotifications(
+            User currentUser
+    ) {
+        return notificationRepository
+                .findByUserIdAndReadFalse(currentUser.getId())
                 .stream()
                 .map(NotificationMapper::toResponse)
                 .toList();
     }
 
     @Override
-    public NotificationResponse markAsRead(Long id) {
+    public NotificationResponse markMyNotificationAsRead(
+            User currentUser,
+            Long id
+    ) {
         Notification notification = findEntity(id);
+
+        validateOwnership(notification, currentUser);
 
         if (Boolean.TRUE.equals(notification.getRead())) {
             throw new BusinessException(
@@ -78,9 +95,10 @@ public class NotificationServiceImpl implements NotificationService {
 
         notification.setRead(true);
 
-        return NotificationMapper.toResponse(
-                notificationRepository.save(notification)
-        );
+        Notification savedNotification =
+                notificationRepository.save(notification);
+
+        return NotificationMapper.toResponse(savedNotification);
     }
 
     @Override
@@ -96,5 +114,19 @@ public class NotificationServiceImpl implements NotificationService {
                                 "Notificación no encontrada con id " + id
                         )
                 );
+    }
+
+    private void validateOwnership(
+            Notification notification,
+            User currentUser
+    ) {
+        if (!notification.getUser()
+                .getId()
+                .equals(currentUser.getId())) {
+
+            throw new BusinessException(
+                    "No tienes permiso para modificar esta notificación"
+            );
+        }
     }
 }

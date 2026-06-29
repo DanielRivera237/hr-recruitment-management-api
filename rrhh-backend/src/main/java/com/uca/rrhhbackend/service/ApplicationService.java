@@ -3,20 +3,37 @@ package com.uca.rrhhbackend.service;
 import com.uca.rrhhbackend.dto.request.ApplicationRequest;
 import com.uca.rrhhbackend.dto.request.ApplicationStatusRequest;
 import com.uca.rrhhbackend.dto.response.ApplicationResponse;
+import com.uca.rrhhbackend.entity.User;
 
 import java.util.List;
 
 public interface ApplicationService {
 
-    ApplicationResponse create(ApplicationRequest request);
+    ApplicationResponse create(
+            User currentUser,
+            ApplicationRequest request
+    );
 
     List<ApplicationResponse> findAll();
 
     ApplicationResponse findById(Long id);
 
-    List<ApplicationResponse> findByCandidate(Long candidateProfileId);
+    ApplicationResponse findMyApplicationById(
+            User currentUser,
+            Long id
+    );
 
-    List<ApplicationResponse> findByJobOffer(Long jobOfferId);
+    List<ApplicationResponse> findMyApplications(
+            User currentUser
+    );
+
+    List<ApplicationResponse> findByCandidate(
+            Long candidateProfileId
+    );
+
+    List<ApplicationResponse> findByJobOffer(
+            Long jobOfferId
+    );
 
     ApplicationResponse updateStatus(
             Long id,

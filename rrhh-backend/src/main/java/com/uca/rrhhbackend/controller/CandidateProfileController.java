@@ -6,7 +6,6 @@ import com.uca.rrhhbackend.entity.User;
 import com.uca.rrhhbackend.service.CandidateProfileService;
 import com.uca.rrhhbackend.service.CurrentUserService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -24,44 +23,52 @@ public class CandidateProfileController {
             CandidateProfileService candidateProfileService,
             CurrentUserService currentUserService
     ) {
-
         this.candidateProfileService = candidateProfileService;
         this.currentUserService = currentUserService;
     }
 
     @PostMapping("/me")
     public ResponseEntity<CandidateProfileResponse> createMyProfile(
-            @Valid @RequestBody CandidateProfileRequest request,
-            HttpServletRequest servletRequest
+            @Valid @RequestBody CandidateProfileRequest request
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(candidateProfileService.createOrUpdateMyProfile(currentUser, request));
+        CandidateProfileResponse response =
+                candidateProfileService.createOrUpdateMyProfile(
+                        currentUser,
+                        request
+                );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<CandidateProfileResponse> getMyProfile(
-            HttpServletRequest servletRequest
-    ) {
+    public ResponseEntity<CandidateProfileResponse> getMyProfile() {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.ok(candidateProfileService.getMyProfile(currentUser));
+        CandidateProfileResponse response =
+                candidateProfileService.getMyProfile(currentUser);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/me")
     public ResponseEntity<CandidateProfileResponse> updateMyProfile(
-            @Valid @RequestBody CandidateProfileRequest request,
-            HttpServletRequest servletRequest
+            @Valid @RequestBody CandidateProfileRequest request
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.ok(
-                candidateProfileService.createOrUpdateMyProfile(currentUser, request)
-        );
+        CandidateProfileResponse response =
+                candidateProfileService.createOrUpdateMyProfile(
+                        currentUser,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
     }
-
 }

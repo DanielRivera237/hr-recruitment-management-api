@@ -6,7 +6,6 @@ import com.uca.rrhhbackend.entity.User;
 import com.uca.rrhhbackend.service.CurrentUserService;
 import com.uca.rrhhbackend.service.WorkExperienceService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -26,60 +25,60 @@ public class WorkExperienceController {
             WorkExperienceService workExperienceService,
             CurrentUserService currentUserService
     ) {
-
         this.workExperienceService = workExperienceService;
         this.currentUserService = currentUserService;
     }
 
     @PostMapping
     public ResponseEntity<WorkExperienceResponse> create(
-            @Valid @RequestBody WorkExperienceRequest request,
-            HttpServletRequest servletRequest
+            @Valid @RequestBody WorkExperienceRequest request
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(workExperienceService.create(currentUser, request));
+        WorkExperienceResponse response =
+                workExperienceService.create(currentUser, request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<WorkExperienceResponse>> findMyWorkExperience(
-            HttpServletRequest servletRequest
-    ) {
+    public ResponseEntity<List<WorkExperienceResponse>>
+    findMyWorkExperience() {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.ok(
-                workExperienceService.findMyWorkExperience(currentUser)
-        );
+        List<WorkExperienceResponse> response =
+                workExperienceService.findMyWorkExperience(currentUser);
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<WorkExperienceResponse> update(
             @PathVariable Long id,
-            @Valid @RequestBody WorkExperienceRequest request,
-            HttpServletRequest servletRequest
+            @Valid @RequestBody WorkExperienceRequest request
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.ok(
-                workExperienceService.update(currentUser, id, request)
-        );
+        WorkExperienceResponse response =
+                workExperienceService.update(currentUser, id, request);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(
-            @PathVariable Long id,
-            HttpServletRequest servletRequest
+            @PathVariable Long id
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
         workExperienceService.delete(currentUser, id);
 
         return ResponseEntity.noContent().build();
     }
-
 }

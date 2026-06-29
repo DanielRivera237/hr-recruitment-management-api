@@ -6,7 +6,6 @@ import com.uca.rrhhbackend.entity.User;
 import com.uca.rrhhbackend.service.CurrentUserService;
 import com.uca.rrhhbackend.service.SkillService;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
@@ -26,44 +25,45 @@ public class SkillController {
             SkillService skillService,
             CurrentUserService currentUserService
     ) {
-
         this.skillService = skillService;
         this.currentUserService = currentUserService;
     }
 
     @PostMapping
     public ResponseEntity<SkillResponse> addSkill(
-            @Valid @RequestBody SkillRequest request,
-            HttpServletRequest servletRequest
+            @Valid @RequestBody SkillRequest request
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(skillService.addSkill(currentUser, request));
+        SkillResponse response =
+                skillService.addSkill(currentUser, request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
     }
 
     @GetMapping("/me")
-    public ResponseEntity<List<SkillResponse>> findMySkills(
-            HttpServletRequest servletRequest
-    ) {
+    public ResponseEntity<List<SkillResponse>> findMySkills() {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
-        return ResponseEntity.ok(skillService.findMySkills(currentUser));
+        List<SkillResponse> response =
+                skillService.findMySkills(currentUser);
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removeSkill(
-            @PathVariable Long id,
-            HttpServletRequest servletRequest
+            @PathVariable Long id
     ) {
 
-        User currentUser = currentUserService.getCurrentUser(servletRequest);
+        User currentUser = currentUserService.getCurrentUser();
 
         skillService.removeSkill(currentUser, id);
 
         return ResponseEntity.noContent().build();
     }
-
 }
