@@ -121,7 +121,7 @@ Ruta base: `/api/auth`
 ```json
 {
   "email": "admin@rrhh.com",
-  "password": "admin12345uca!!!"
+  "password": "Admin123"
 }
 ```
 
