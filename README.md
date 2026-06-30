@@ -39,8 +39,6 @@ JWT_SECRET_KEY=CLAVE_BASE64_SEGURA
 JWT_EXPIRATION_TIME=86400000
 ```
 
-> El archivo `.env` debe mantenerse fuera del repositorio. La expiración predeterminada del token es de 24 horas.
-
 ---
 
 ## Autenticación y autorización
